@@ -1,10 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
-const TODO_URL = 'https://demo.playwright.dev/todomvc/';
-
-// TEST 1 – NÄIDIS: kasutaja saab ülesande lisada.
 test('kasutaja saab lisada ülesande', async ({ page }) => {
-  await page.goto(TODO_URL);
+  await page.goto('https://demo.playwright.dev/todomvc/');
 
   const input = page.getByPlaceholder('What needs to be done?');
   await input.fill('Õpi UI testimist');
@@ -13,26 +10,59 @@ test('kasutaja saab lisada ülesande', async ({ page }) => {
   await expect(page.getByText('Õpi UI testimist')).toBeVisible();
 });
 
-// TEST 2 – ÕPILANE: kasutaja saab ülesande lõpetatuks märkida.
-test('kasutaja saab ülesande lõpetatuks märkida', async ({ page }) => {
-  await page.goto(TODO_URL);
+test('kasutaja saab märkida ülesande lõpetatuks', async ({ page }) => {
+  await page.goto('https://demo.playwright.dev/todomvc/');
 
-  // TODO:
-  // 1. Lisa ülesanne "Esimene test".
-  // 2. Leia ülesande rida getByRole('listitem') ja filter({ hasText: ... }) abil.
-  // 3. Leia ülesande rea sees checkbox.
-  // 4. Märgi checkbox check() abil.
-  // 5. Kontrolli toBeChecked() abil, et checkbox on märgitud.
+  const input = page.getByPlaceholder('What needs to be done?');
+  await input.fill('Esimene test');
+  await input.press('Enter');
+
+  const task = page.getByRole('listitem').filter({
+    hasText: 'Esimene test'
+  });
+  const checkbox = task.getByRole('checkbox');
+
+  await checkbox.check();
+  await expect(checkbox).toBeChecked();
 });
 
-// TEST 3 – ÕPILANE: kasutaja saab ülesande kustutada.
-test('kasutaja saab ülesande kustutada', async ({ page }) => {
-  await page.goto(TODO_URL);
+test('kasutaja saab kustutada ülesande', async ({ page }) => {
+  await page.goto('https://demo.playwright.dev/todomvc/');
 
-  // TODO:
-  // 1. Lisa ülesanne "Kustutatav ülesanne".
-  // 2. Leia ülesande rida.
-  // 3. Kasuta task.hover(), et kustutamisnupp nähtavale tuua.
-  // 4. Leia rea seest nupp CSS-lokaatoriga 'button.destroy' ja vajuta seda.
-  // 5. Kontrolli toHaveCount(0) abil, et ülesannet enam ei ole.
+  const input = page.getByPlaceholder('What needs to be done?');
+  await input.fill('Kustutatav ülesanne');
+  await input.press('Enter');
+
+  const task = page.getByRole('listitem').filter({
+    hasText: 'Kustutatav ülesanne'
+  });
+
+  await task.hover();
+  await task.locator('button.destroy').click();
+
+  await expect(page.getByText('Kustutatav ülesanne')).toHaveCount(0);
+});
+
+test('lisategevus: kaks ülesannet ja aktiivsete/lõpetatud filtrid', async ({ page }) => {
+  await page.goto('https://demo.playwright.dev/todomvc/');
+
+  const input = page.getByPlaceholder('What needs to be done?');
+  await input.fill('Ülesanne 1');
+  await input.press('Enter');
+  await input.fill('Ülesanne 2');
+  await input.press('Enter');
+
+  const todoItems = page.locator('.todo-list li');
+  await expect(todoItems).toHaveCount(2);
+
+  const task1 = todoItems.filter({ hasText: 'Ülesanne 1' });
+  await task1.getByRole('checkbox').check();
+
+  await page.getByRole('link', { name: 'Active' }).click();
+  await expect(page.getByText('Ülesanne 2')).toBeVisible();
+  await expect(page.getByText('Ülesanne 1')).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'Completed' }).click();
+  await expect(page.getByText('Ülesanne 1')).toBeVisible();
+  await expect(page.getByText('Ülesanne 2')).toHaveCount(0);
 });
